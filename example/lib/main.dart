@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:game_services_firebase_auth/game_services_firebase_auth.dart';
 
 void main() {
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  Firebase.initializeApp().then((_) => runApp(MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -13,31 +16,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool loading = false;
-  bool success = false;
-  Object? error;
+  StreamSubscription? _streamSubscription;
+  User? _user;
 
   @override
   void initState() {
     super.initState();
-    testLogin();
+    _listenAuthState();
   }
 
-  Future<void> testLogin() async {
-    setState(() {
-      loading = true;
-    });
-    try {
-      success = await GameServicesFirebaseAuth.signInWithGameService();
-      setState(() {});
-    } catch (e) {
-      error = e;
-    } finally {
+  void _listenAuthState() {
+    _streamSubscription = FirebaseAuth.instance.idTokenChanges().listen((user) {
       setState(() {
-        loading = false;
-        success = false;
+        _user = user;
       });
-    }
+    });
   }
 
   @override
@@ -48,16 +41,55 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Auth test'),
         ),
         body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Loading: $loading'),
-            Text('Error: $error'),
-            if (!loading) ...[
-              Text('Success: $success'),
-              Text('Error: $error'),
-            ]
+            if (_user == null) ...[
+              TextButton(
+                onPressed: () => FirebaseAuth.instance.signInAnonymously(),
+                child: Text('Sign in Anonimously'),
+              ),
+              TextButton(
+                onPressed: () =>
+                    FirebaseAuth.instance.createUserWithEmailAndPassword(email: 'test@test.fr', password: 'salut123'),
+                child: Text('Sign in random mail'),
+              ),
+              TextButton(
+                onPressed: () => GameServicesFirebaseAuth.signInWithGameService(),
+                child: Text('Sign in with OS Game service'),
+              ),
+            ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (_user != null) ...[
+                  // if (_user!.isAnonymous)
+                  if (!GameServicesFirebaseAuth.isUserLinkedToGameService())
+                    TextButton(
+                      onPressed: () => GameServicesFirebaseAuth.linkGameServicesCredentialsToCurrentUser(),
+                      child: Text('Link credentials with OS Game service'),
+                    ),
+                  Text('Name: ${_user?.displayName}'),
+                  Text('Email: ${_user?.email}'),
+                  Text('UID: ${_user?.uid}'),
+                  Text('Providers: ${_user?.providerData.map((e) => e.providerId)}'),
+                  Text('Is linked with GameServices: ${GameServicesFirebaseAuth.isUserLinkedToGameService()}'),
+                  TextButton(
+                    onPressed: () => FirebaseAuth.instance.signOut(),
+                    child: Text('Logout'),
+                  ),
+                ]
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _streamSubscription?.cancel();
   }
 }

@@ -1,4 +1,4 @@
-name: game_services_firebase_au
+name: game_services_firebase_auth
 description: A new flutter plugin project.
 version: 0.0.1
 author:
@@ -11,6 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  firebase_core: ^1.1.0
+  firebase_auth: ^1.1.3
 
 dev_dependencies:
   flutter_test:
