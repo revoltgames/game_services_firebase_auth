@@ -40,8 +40,9 @@ class GameServicesFirebaseAuth {
       throw Exception('Firebase user is null');
     }
 
-    final isLinked =
-        user.providerData.map((userInfo) => userInfo.providerId).contains(Platform.isIOS ? 'gc.apple.com' : '');
+    final isLinked = user.providerData
+        .map((userInfo) => userInfo.providerId)
+        .contains(Platform.isIOS ? 'gc.apple.com' : 'playgames.google.com');
 
     return isLinked;
   }
