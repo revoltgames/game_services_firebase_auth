@@ -101,8 +101,6 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 linkCredentialsFirebaseWithPlayGames(account)
             }
         }
-
-        finishPendingOperationWithSuccess()
     }
 
     private fun signInFirebaseWithPlayGames(acct: GoogleSignInAccount) {
@@ -115,8 +113,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         auth.signInWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 Log.d(TAG, "signInWithCredential:success")
+                finishPendingOperationWithSuccess()
             } else {
                 Log.w(TAG, "signInWithCredential:failure", result.exception)
+                finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
             }
         }
     }
@@ -133,16 +133,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         currentUser.linkWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 Log.d(TAG, "linkGameServicesCredentialsToCurrentUser:success")
+                finishPendingOperationWithSuccess()
             } else {
                 Log.w(TAG, "linkGameServicesCredentialsToCurrentUser:failure", result.exception)
-            }
-        }
-
-        auth.signInWithCredential(credential).addOnCompleteListener { result ->
-            if (result.isSuccessful) {
-                Log.d(TAG, "signInWithCredential:success")
-            } else {
-                Log.w(TAG, "signInWithCredential:failure", result.exception)
+                finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
             }
         }
     }
