@@ -227,10 +227,12 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             Methods.signInWithGameService -> {
                 method = Methods.signInWithGameService
                 silentSignIn(result)
+                result.success(true);
             }
             Methods.linkGameServicesCredentialsToCurrentUser -> {
                 method = Methods.linkGameServicesCredentialsToCurrentUser
                 silentSignIn(result)
+                result.success(true);
             }
             else -> result.notImplemented()
         }
