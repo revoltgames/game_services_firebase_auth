@@ -63,7 +63,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     private fun silentSignIn(result: Result, clientId: String?) {
         val activity = activity ?: return
-        
+
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(

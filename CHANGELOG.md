@@ -1,3 +1,6 @@
+## 0.0.3
+* Add clientId option on Android
+
 ## 0.0.2
 * Update licence
 
