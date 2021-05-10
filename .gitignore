@@ -6,5 +6,7 @@
 
 build/
 
+*.iml
+*.ipr
+*.iws
 .idea/
-/.idea/
