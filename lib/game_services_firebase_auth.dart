@@ -7,10 +7,11 @@ import 'package:flutter/services.dart';
 class GameServicesFirebaseAuth {
   static const MethodChannel _channel = const MethodChannel('game_services_firebase_auth');
 
-  // Try to sign in with native Game Service (Play Games on Android and GameCenter on iOS)
-  // Return true if success
-  static Future<bool> signInWithGameService() async {
-    final dynamic result = await _channel.invokeMethod('signInWithGameService');
+  /// Try to sign in with native Game Service (Play Games on Android and GameCenter on iOS)
+  /// Return `true` if success
+  /// [clientId] is only for Android if you want to provide a clientId other than the main one in you google-services.json
+  static Future<bool> signInWithGameService({String? clientId}) async {
+    final dynamic result = await _channel.invokeMethod('signInWithGameService', {'client_id': clientId});
 
     if (result is bool) {
       return result;
@@ -19,10 +20,12 @@ class GameServicesFirebaseAuth {
     }
   }
 
-  // Try to sign link current user with native Game Service (Play Games on Android and GameCenter on iOS)
-  // Return true if success
-  static Future<bool> linkGameServicesCredentialsToCurrentUser() async {
-    final dynamic result = await _channel.invokeMethod('linkGameServicesCredentialsToCurrentUser');
+  /// Try to sign link current user with native Game Service (Play Games on Android and GameCenter on iOS)
+  /// Return `true` if success
+  /// [clientId] is only for Android if you want to provide a clientId other than the main one in you google-services.json
+  static Future<bool> linkGameServicesCredentialsToCurrentUser({String? clientId}) async {
+    final dynamic result =
+        await _channel.invokeMethod('linkGameServicesCredentialsToCurrentUser', {'client_id': clientId});
 
     if (result is bool) {
       return result;
@@ -31,8 +34,8 @@ class GameServicesFirebaseAuth {
     }
   }
 
-  // Test if a user is already linked to a game service
-  // Advised to be call before linkGameServicesCredentialsToCurrentUser()
+  /// Test if a user is already linked to a game service
+  /// Advised to be call before linkGameServicesCredentialsToCurrentUser()
   static bool isUserLinkedToGameService() {
     final user = FirebaseAuth.instance.currentUser;
 

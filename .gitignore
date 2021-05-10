@@ -6,4 +6,5 @@
 
 build/
 
-/example/ios/Runner/GoogleService-Info.plist
+.idea/
+/.idea/
