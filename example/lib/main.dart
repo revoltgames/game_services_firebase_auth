@@ -63,7 +63,6 @@ class _MyAppState extends State<MyApp> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 if (_user != null) ...[
-                  // if (_user!.isAnonymous)
                   if (!GameServicesFirebaseAuth.isUserLinkedToGameService())
                     TextButton(
                       onPressed: () => GameServicesFirebaseAuth.linkGameServicesCredentialsToCurrentUser(),

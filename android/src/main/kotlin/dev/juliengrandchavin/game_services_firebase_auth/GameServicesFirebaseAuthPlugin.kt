@@ -23,7 +23,6 @@ import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
-import io.flutter.plugins.firebase.auth.Constants.TAG
 import java.lang.Exception
 
 private const val CHANNEL_NAME = "game_services_firebase_auth"
@@ -34,7 +33,8 @@ object Methods {
     const val linkGameServicesCredentialsToCurrentUser = "linkGameServicesCredentialsToCurrentUser"
 }
 
-class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
+class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : FlutterPlugin,
+    MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
     private var googleSignInClient: GoogleSignInClient? = null
     private var activityPluginBinding: ActivityPluginBinding? = null
@@ -49,20 +49,26 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         fun getResourceFromContext(@NonNull context: Context, resName: String): String {
             val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
             if (stringRes == 0) {
-                throw IllegalArgumentException(String.format("The 'R.string.%s' value it's not defined in your project's resources file.", resName))
+                throw IllegalArgumentException(
+                    String.format(
+                        "The 'R.string.%s' value it's not defined in your project's resources file.",
+                        resName
+                    )
+                )
             }
             return context.getString(stringRes)
         }
 
     }
 
-    private fun silentSignIn(result: Result) {
+    private fun silentSignIn(result: Result, clientId: String?) {
         val activity = activity ?: return
-
-        val clientId = getResourceFromContext(context, "default_web_client_id")
+        
+        val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).requestServerAuthCode(clientId)
+            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+        ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         googleSignInClient?.silentSignIn()?.addOnCompleteListener { task ->
             pendingOperation = PendingOperation(method!!, result)
@@ -71,16 +77,19 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             } else {
                 Log.e("Error", "signInError", task.exception)
                 Log.i("ExplicitSignIn", "Trying explicit sign in")
-                explicitSignIn()
+                explicitSignIn(clientId)
             }
         }
     }
 
-    private fun explicitSignIn() {
+    private fun explicitSignIn(clientId: String?) {
         val activity = activity ?: return
-        val clientId = getResourceFromContext(context, "default_web_client_id")
+
+        val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
+
         val builder = GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).requestServerAuthCode(clientId)
+            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+        ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
     }
@@ -88,7 +97,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     private fun handleSignInResult() {
         val activity = this.activity!!
 
-        val gamesClient = Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+        val gamesClient =
+            Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
         gamesClient.setViewForPopups(activity.findViewById(android.R.id.content))
         gamesClient.setGravityForPopups(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
 
@@ -112,10 +122,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         auth.signInWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
-                Log.d(TAG, "signInWithCredential:success")
                 finishPendingOperationWithSuccess()
             } else {
-                Log.w(TAG, "signInWithCredential:failure", result.exception)
                 finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
             }
         }
@@ -132,10 +140,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         currentUser.linkWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
-                Log.d(TAG, "linkGameServicesCredentialsToCurrentUser:success")
                 finishPendingOperationWithSuccess()
             } else {
-                Log.w(TAG, "linkGameServicesCredentialsToCurrentUser:failure", result.exception)
                 finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
             }
         }
@@ -220,11 +226,16 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         when (call.method) {
             Methods.signInWithGameService -> {
                 method = Methods.signInWithGameService
-                silentSignIn(result)
+
+                val clientId: String? = call.argument<String>("client_id")
+
+                silentSignIn(result, clientId)
             }
             Methods.linkGameServicesCredentialsToCurrentUser -> {
                 method = Methods.linkGameServicesCredentialsToCurrentUser
-                silentSignIn(result)
+                val clientId: String? = call.argument<String>("client_id")
+
+                silentSignIn(result, clientId)
             }
             else -> result.notImplemented()
         }
