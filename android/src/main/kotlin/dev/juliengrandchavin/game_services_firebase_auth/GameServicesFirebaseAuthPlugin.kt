@@ -139,7 +139,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val authCode = acct.serverAuthCode ?: throw Exception("auth_code_null")
 
         val credential = PlayGamesAuthProvider.getCredential(authCode)
-        
+
         currentUser.linkWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 finishPendingOperationWithSuccess()

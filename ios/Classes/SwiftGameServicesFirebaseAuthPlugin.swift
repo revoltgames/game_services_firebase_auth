@@ -39,6 +39,8 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
                     Auth.auth().signIn(with:cred!) { (user, error) in
                         
                         if let error = error {
+                            
+                            
                             result(false, FlutterError.init(code: "firebase_signin_failed", message:"Failed to get sign in to Firebase", details:error.localizedDescription))
                             return
                         }
@@ -60,7 +62,7 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
     private func linkGameCenterCredentialsToCurrentUser(result: @escaping (Bool, FlutterError?) -> Void) {
         let player = GKLocalPlayer.local
         
-        var user: User? = Auth.auth().currentUser
+        let user: User? = Auth.auth().currentUser
         
         if(user == nil) {
             result(false, FlutterError.init(code: "no_user_sign_in", message: "No User sign in to Firebase, impossible to link any credentials", details:nil))
@@ -96,8 +98,16 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
                     }
                     
                     user!.link(with: cred!) { (authResult, error) in
+                        
                         if let error = error {
-                            result(false, FlutterError.init(code: "firebase_link_credentials_failed", message:"Failed to link credentials to Firebase User", details:error.localizedDescription))
+                            guard let errorCode = AuthErrorCode(rawValue: error._code) else {
+                                
+                                print("there was an error logging in but it could not be matched with a firebase code")
+                                return
+                                
+                            }
+                            let code = errorCode.rawValue == 17025 ? "ERROR_CREDENTIAL_ALREADY_IN_USE" : "${errorCode.rawValue}"
+                            result(false, FlutterError.init(code: code, message:"Failed to link credentials to Firebase User", details:error.localizedDescription))
                             return
                         }
                         
@@ -106,50 +116,50 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
                     }
                 }
                 
+                
+            } else {
+                result(false, FlutterError.init(code: "no_player_detected", message: "No player detected on this phone", details:nil))
+                return
+            }
             
-        } else {
-            result(false, FlutterError.init(code: "no_player_detected", message: "No player detected on this phone", details:nil))
-            return
         }
-        
     }
-}
-
-
-
-public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    print(call.method)
     
-    if(call.method == "signInWithGameService") {
+    
+    
+    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        print(call.method)
         
-        signInWithGameCenter () { cred, error in
-            if let error = error {
-                result(error)
+        if(call.method == "signInWithGameService") {
+            
+            signInWithGameCenter () { cred, error in
+                if let error = error {
+                    result(error)
+                }
+                result(true)
             }
-            result(true)
-        }
-        
-    } else if(call.method == "linkGameServicesCredentialsToCurrentUser"){
-        linkGameCenterCredentialsToCurrentUser () { cred, error in
-            if let error = error {
-                result(error)
+            
+        } else if(call.method == "linkGameServicesCredentialsToCurrentUser"){
+            linkGameCenterCredentialsToCurrentUser () { cred, error in
+                if let error = error {
+                    result(error)
+                }
+                result(true)
             }
-            result(true)
+        }else {
+            self.log(message: "Unknown method called")
         }
-    }else {
-        self.log(message: "Unknown method called")
     }
-}
-
-public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "game_services_firebase_auth", binaryMessenger: registrar.messenger())
-    let instance = SwiftGameServicesFirebaseAuthPlugin()
-    registrar.addMethodCallDelegate(instance, channel: channel)
-}
-
-private func log(message: StaticString) {
-    if #available(iOS 10.0, *) {
-        os_log(message)
+    
+    public static func register(with registrar: FlutterPluginRegistrar) {
+        let channel = FlutterMethodChannel(name: "game_services_firebase_auth", binaryMessenger: registrar.messenger())
+        let instance = SwiftGameServicesFirebaseAuthPlugin()
+        registrar.addMethodCallDelegate(instance, channel: channel)
     }
-}
+    
+    private func log(message: StaticString) {
+        if #available(iOS 10.0, *) {
+            os_log(message)
+        }
+    }
 }
