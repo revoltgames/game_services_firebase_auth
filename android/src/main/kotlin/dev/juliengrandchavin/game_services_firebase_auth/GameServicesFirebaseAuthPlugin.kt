@@ -14,6 +14,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.PlayGamesAuthProvider
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -34,7 +35,7 @@ object Methods {
 }
 
 class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : FlutterPlugin,
-    MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
+        MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
     private var googleSignInClient: GoogleSignInClient? = null
     private var activityPluginBinding: ActivityPluginBinding? = null
@@ -50,10 +51,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
             if (stringRes == 0) {
                 throw IllegalArgumentException(
-                    String.format(
-                        "The 'R.string.%s' value it's not defined in your project's resources file.",
-                        resName
-                    )
+                        String.format(
+                                "The 'R.string.%s' value it's not defined in your project's resources file.",
+                                resName
+                        )
                 )
             }
             return context.getString(stringRes)
@@ -67,7 +68,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(
-            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         googleSignInClient?.silentSignIn()?.addOnCompleteListener { task ->
@@ -88,7 +89,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(
-            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
@@ -98,7 +99,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val activity = this.activity!!
 
         val gamesClient =
-            Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+                Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
         gamesClient.setViewForPopups(activity.findViewById(android.R.id.content))
         gamesClient.setGravityForPopups(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
 
@@ -124,7 +125,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             if (result.isSuccessful) {
                 finishPendingOperationWithSuccess()
             } else {
-                finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
+                finishPendingOperationWithError(result.exception
+                        ?: Exception("signInWithCredential failed"))
             }
         }
     }
@@ -137,12 +139,13 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val authCode = acct.serverAuthCode ?: throw Exception("auth_code_null")
 
         val credential = PlayGamesAuthProvider.getCredential(authCode)
-
+        
         currentUser.linkWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 finishPendingOperationWithSuccess()
             } else {
-                finishPendingOperationWithError(result.exception?.localizedMessage ?: "")
+                finishPendingOperationWithError(result.exception
+                        ?: Exception("linkWithCredential failed"))
             }
         }
     }
@@ -198,10 +201,14 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         pendingOperation = null
     }
 
-    private fun finishPendingOperationWithError(errorMessage: String) {
+    private fun finishPendingOperationWithError(exception: Exception) {
         Log.i(pendingOperation!!.method, "error")
-        pendingOperation!!.result.error("error", errorMessage, null)
-        pendingOperation = null
+        if (exception is FirebaseAuthException) {
+            pendingOperation!!.result.error(exception.errorCode, exception.localizedMessage, null)
+        } else {
+            pendingOperation!!.result.error("error", exception.localizedMessage, null)
+            pendingOperation = null
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -215,7 +222,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 if (message.isEmpty()) {
                     message = "Something went wrong " + result?.status
                 }
-                finishPendingOperationWithError(message)
+                finishPendingOperationWithError(Exception(message))
             }
             return true
         }
