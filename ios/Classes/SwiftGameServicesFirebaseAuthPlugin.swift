@@ -59,7 +59,7 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
         }
     }
     
-    private func linkGameCenterCredentialsToCurrentUser(result: @escaping (Bool, FlutterError?) -> Void) {
+    private func linkGameCenterCredentialsToCurrentUser (forceSignInIfCredentialAlreadyUsed: Bool, result: @escaping (Bool, FlutterError?) -> Void) {
         let player = GKLocalPlayer.local
         
         let user: User? = Auth.auth().currentUser
@@ -101,21 +101,34 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
                         
                         if let error = error {
                             guard let errorCode = AuthErrorCode(rawValue: error._code) else {
-                                
                                 print("there was an error logging in but it could not be matched with a firebase code")
                                 return
-                                
                             }
+                            
                             let code = errorCode.rawValue == 17025 ? "ERROR_CREDENTIAL_ALREADY_IN_USE" : "${errorCode.rawValue}"
-                            result(false, FlutterError.init(code: code, message:"Failed to link credentials to Firebase User", details:error.localizedDescription))
+                            
+                            if(code == "ERROR_CREDENTIAL_ALREADY_IN_USE" && forceSignInIfCredentialAlreadyUsed) {
+                                try? Auth.auth().signOut();
+                                
+                                Auth.auth().signIn(with:cred!) { (user, error) in
+                                    if let error = error {
+                                        result(false, FlutterError.init(code: "firebase_signin_failed", message:"Failed to get sign in to Firebase", details:error.localizedDescription))
+                                        return
+                                    }
+                                    
+                                    result(true, nil);
+                                    return
+                                }
+                            } else {
+                                result(false, FlutterError.init(code: code, message:"Failed to link credentials to Firebase User", details:error.localizedDescription))
+                                return
+                            }
+                        } else {
+                            result(true, nil);
                             return
                         }
-                        
-                        result(true, nil);
-                        return
                     }
                 }
-                
                 
             } else {
                 result(false, FlutterError.init(code: "no_player_detected", message: "No player detected on this phone", details:nil))
@@ -130,7 +143,7 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         print(call.method)
         
-        if(call.method == "signInWithGameService") {
+        if(call.method == "sign_in_with_game_service") {
             
             signInWithGameCenter () { cred, error in
                 if let error = error {
@@ -139,8 +152,17 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
                 result(true)
             }
             
-        } else if(call.method == "linkGameServicesCredentialsToCurrentUser"){
-            linkGameCenterCredentialsToCurrentUser () { cred, error in
+        } else if(call.method == "link_game_services_credentials_to_current_user"){
+            
+            var forceSignInIfCredentialAlreadyUsed = false
+            
+            let args = call.arguments as? Dictionary<String, Any>
+            
+            if(args != nil) {
+                forceSignInIfCredentialAlreadyUsed = (args!["force_sign_in_credential_already_used"] as? Bool) ?? false
+            }
+            
+            linkGameCenterCredentialsToCurrentUser (forceSignInIfCredentialAlreadyUsed: forceSignInIfCredentialAlreadyUsed) { cred, error in
                 if let error = error {
                     result(error)
                 }
