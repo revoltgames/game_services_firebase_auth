@@ -30,12 +30,13 @@ private const val CHANNEL_NAME = "game_services_firebase_auth"
 private const val RC_SIGN_IN = 9000
 
 object Methods {
-    const val signInWithGameService = "signInWithGameService"
-    const val linkGameServicesCredentialsToCurrentUser = "linkGameServicesCredentialsToCurrentUser"
+    const val signInWithGameService = "sign_in_with_game_service"
+    const val linkGameServicesCredentialsToCurrentUser =
+        "link_game_services_credentials_to_current_user"
 }
 
 class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : FlutterPlugin,
-        MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
+    MethodChannel.MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
 
     private var googleSignInClient: GoogleSignInClient? = null
     private var activityPluginBinding: ActivityPluginBinding? = null
@@ -44,6 +45,9 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     private lateinit var context: Context
 
     private var method: String? = null
+    private var clientId: String? = null
+    private var gResult: Result? = null
+    private var forceSignInIfCredentialAlreadyUsed: Boolean = false
 
     companion object {
         @JvmStatic
@@ -51,10 +55,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
             if (stringRes == 0) {
                 throw IllegalArgumentException(
-                        String.format(
-                                "The 'R.string.%s' value it's not defined in your project's resources file.",
-                                resName
-                        )
+                    String.format(
+                        "The 'R.string.%s' value it's not defined in your project's resources file.",
+                        resName
+                    )
                 )
             }
             return context.getString(stringRes)
@@ -62,17 +66,17 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     }
 
-    private fun silentSignIn(result: Result, clientId: String?) {
+    private fun silentSignIn() {
         val activity = activity ?: return
 
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         googleSignInClient?.silentSignIn()?.addOnCompleteListener { task ->
-            pendingOperation = PendingOperation(method!!, result)
+            pendingOperation = PendingOperation(method!!, gResult!!)
             if (task.isSuccessful) {
                 handleSignInResult()
             } else {
@@ -89,7 +93,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
         val builder = GoogleSignInOptions.Builder(
-                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
+            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
@@ -99,7 +103,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         val activity = this.activity!!
 
         val gamesClient =
-                Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
+            Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
         gamesClient.setViewForPopups(activity.findViewById(android.R.id.content))
         gamesClient.setGravityForPopups(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
 
@@ -125,8 +129,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             if (result.isSuccessful) {
                 finishPendingOperationWithSuccess()
             } else {
-                finishPendingOperationWithError(result.exception
-                        ?: Exception("signInWithCredential failed"))
+                finishPendingOperationWithError(
+                    result.exception
+                        ?: Exception("signInWithCredential failed")
+                )
             }
         }
     }
@@ -140,12 +146,27 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         val credential = PlayGamesAuthProvider.getCredential(authCode)
 
+
         currentUser.linkWithCredential(credential).addOnCompleteListener { result ->
             if (result.isSuccessful) {
                 finishPendingOperationWithSuccess()
             } else {
-                finishPendingOperationWithError(result.exception
-                        ?: Exception("linkWithCredential failed"))
+                if (result.exception is FirebaseAuthException) {
+                    if ((result.exception as FirebaseAuthException).errorCode == "ERROR_CREDENTIAL_ALREADY_IN_USE" && forceSignInIfCredentialAlreadyUsed) {
+                        method = Methods.signInWithGameService
+                        silentSignIn()
+                    } else {
+                        finishPendingOperationWithError(
+                            result.exception
+                                ?: Exception("linkWithCredential failed")
+                        )
+                    }
+                } else {
+                    finishPendingOperationWithError(
+                        result.exception
+                            ?: Exception("linkWithCredential failed")
+                    )
+                }
             }
         }
     }
@@ -234,15 +255,19 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             Methods.signInWithGameService -> {
                 method = Methods.signInWithGameService
 
-                val clientId: String? = call.argument<String>("client_id")
+                clientId = call.argument<String>("client_id")
 
-                silentSignIn(result, clientId)
+                gResult = result
+
+                silentSignIn()
             }
             Methods.linkGameServicesCredentialsToCurrentUser -> {
                 method = Methods.linkGameServicesCredentialsToCurrentUser
-                val clientId: String? = call.argument<String>("client_id")
-
-                silentSignIn(result, clientId)
+                clientId = call.argument<String>("client_id")
+                forceSignInIfCredentialAlreadyUsed =
+                    call.argument<Boolean>("force_sign_in_credential_already_used") == true
+                gResult = result
+                silentSignIn()
             }
             else -> result.notImplemented()
         }

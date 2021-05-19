@@ -63,11 +63,17 @@ class _MyAppState extends State<MyApp> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 if (_user != null) ...[
-                  if (!GameServicesFirebaseAuth.isUserLinkedToGameService())
+                  if (!GameServicesFirebaseAuth.isUserLinkedToGameService()) ...[
                     TextButton(
                       onPressed: () => GameServicesFirebaseAuth.linkGameServicesCredentialsToCurrentUser(),
                       child: Text('Link credentials with OS Game service'),
                     ),
+                    TextButton(
+                      onPressed: () => GameServicesFirebaseAuth.linkGameServicesCredentialsToCurrentUser(
+                          forceSignInIfCredentialAlreadyUsed: true),
+                      child: Text('Link credentials with OS Game service (Forced)'),
+                    ),
+                  ],
                   Text('Name: ${_user?.displayName}'),
                   Text('Email: ${_user?.email}'),
                   Text('UID: ${_user?.uid}'),
