@@ -1,3 +1,6 @@
+## 0.0.6
+* Add forceSignInIfCredentialAlreadyUsed options to linkGameServicesCredentialsToCurrentUser()
+
 ## 0.0.5
 * Get ERROR_CREDENTIAL_ALREADY_IN_USE for linkGameServicesCredentialsToCurrentUser()
 
