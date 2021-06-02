@@ -1,3 +1,6 @@
+## 0.0.8
+* Add silent sign in on iOS
+
 ## 0.0.7
 * Catch ApiException on Android
 
