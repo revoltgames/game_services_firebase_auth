@@ -12,6 +12,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.Status
 import com.google.android.gms.games.Games
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
@@ -77,6 +79,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         googleSignInClient?.silentSignIn()?.addOnCompleteListener { task ->
             pendingOperation = PendingOperation(method!!, gResult!!)
+
             if (task.isSuccessful) {
                 handleSignInResult()
             } else {
@@ -224,26 +227,39 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     private fun finishPendingOperationWithError(exception: Exception) {
         Log.i(pendingOperation!!.method, "error")
-        if (exception is FirebaseAuthException) {
-            pendingOperation!!.result.error(exception.errorCode, exception.localizedMessage, null)
-        } else {
-            pendingOperation!!.result.error("error", exception.localizedMessage, null)
-            pendingOperation = null
+
+        when (exception) {
+            is FirebaseAuthException -> {
+                pendingOperation!!.result.error(
+                    exception.errorCode,
+                    exception.localizedMessage,
+                    null
+                )
+            }
+            is ApiException -> {
+                pendingOperation!!.result.error(
+                    exception.statusCode.toString(),
+                    exception.localizedMessage,
+                    null
+                )
+            }
+            else -> {
+                pendingOperation!!.result.error("error", exception.localizedMessage, null)
+                pendingOperation = null
+            }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == RC_SIGN_IN) {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
+
             val signInAccount = result?.signInAccount
+
             if (result?.isSuccess == true && signInAccount != null) {
                 handleSignInResult()
             } else {
-                var message = result?.status?.statusMessage ?: ""
-                if (message.isEmpty()) {
-                    message = "Something went wrong " + result?.status
-                }
-                finishPendingOperationWithError(Exception(message))
+                finishPendingOperationWithError(ApiException(result?.status ?: Status(0)))
             }
             return true
         }
