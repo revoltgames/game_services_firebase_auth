@@ -1,3 +1,6 @@
+## 0.0.7
+* Catch ApiException on Android
+
 ## 0.0.6
 * Add forceSignInIfCredentialAlreadyUsed options to linkGameServicesCredentialsToCurrentUser()
 
