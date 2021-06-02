@@ -27,7 +27,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import java.lang.Exception
-import kotlin.reflect.typeOf
 
 private const val CHANNEL_NAME = "game_services_firebase_auth"
 private const val RC_SIGN_IN = 9000
@@ -231,7 +230,11 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         when (exception) {
             is FirebaseAuthException -> {
-                pendingOperation!!.result.error(exception.errorCode, exception.localizedMessage, null)
+                pendingOperation!!.result.error(
+                    exception.errorCode,
+                    exception.localizedMessage,
+                    null
+                )
             }
             is ApiException -> {
                 pendingOperation!!.result.error(
