@@ -125,9 +125,9 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
         
         
         for provider in user!.providerData {
-            
             if(provider.providerID == "gc.apple.com") {
-                result(false, FlutterError.init(code: "user_already_link_to_game_center", message: "User already link to Game Center", details:nil))
+                print("User already link to Game Center")
+                result(true, nil)
                 return
             }
             
@@ -137,25 +137,23 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
         if(player.isAuthenticated) {
             self.getCredentialsAndLink(user: user!, forceSignInIfCredentialAlreadyUsed: forceSignInIfCredentialAlreadyUsed, result: result)
         } else {
-        player.authenticateHandler = { vc, error in
-            
-            if let vc = vc {
-                self.viewController.present(vc, animated: true, completion: nil)
-            } else if player.isAuthenticated {
-                self.getCredentialsAndLink(user: user!, forceSignInIfCredentialAlreadyUsed: forceSignInIfCredentialAlreadyUsed, result: result)
-            } else {
-                result(false, FlutterError.init(code: "no_player_detected", message: "No player detected on this phone", details:nil))
-                return
+            player.authenticateHandler = { vc, error in
+                
+                if let vc = vc {
+                    self.viewController.present(vc, animated: true, completion: nil)
+                } else if player.isAuthenticated {
+                    self.getCredentialsAndLink(user: user!, forceSignInIfCredentialAlreadyUsed: forceSignInIfCredentialAlreadyUsed, result: result)
+                } else {
+                    result(false, FlutterError.init(code: "no_player_detected", message: "No player detected on this phone", details:nil))
+                    return
+                }
             }
-        }
         }
     }
     
     
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        print(call.method)
-        
         if(call.method == "sign_in_with_game_service") {
             
             signInWithGameCenter () { cred, error in

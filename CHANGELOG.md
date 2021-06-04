@@ -1,3 +1,6 @@
+## 0.0.9
+* Fix user_already_link_to_game_center iOS error
+
 ## 0.0.8
 * Add silent sign in on iOS
 
