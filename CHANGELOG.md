@@ -1,3 +1,6 @@
+## 0.1.0
+* Improve exception thrown by the packages
+
 ## 0.0.9
 * Fix user_already_link_to_game_center iOS error
 
