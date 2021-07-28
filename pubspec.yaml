@@ -1,6 +1,6 @@
 name: game_services_firebase_auth
 description: This plugin make some FirebaseAuth features available with GameCenter on iOS and PlayGames on Android
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/jgrandchavin/game_services_firebase_auth.git
 repository: https://github.com/jgrandchavin/game_services_firebase_auth.git
 
@@ -12,8 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^1.1.1
-  firebase_auth: ^1.1.4
+  firebase_core: ^1.4.0
+  firebase_auth: ^3.0.1
 
 dev_dependencies:
   flutter_test:

@@ -1,3 +1,9 @@
+## 0.1.1
+* Update Firebase iOS SDK to 8.3.0
+* Update Flutter package firebase_core to 1.4.0
+* Update Flutter package firebase_auth to 3.0.1
+
+
 ## 0.1.0
 * Improve exception thrown by the packages
 
