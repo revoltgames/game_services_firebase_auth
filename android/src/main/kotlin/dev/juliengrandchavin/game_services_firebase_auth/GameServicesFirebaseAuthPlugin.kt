@@ -21,11 +21,8 @@ import com.google.firebase.auth.PlayGamesAuthProvider
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.PluginRegistry
 import java.lang.Exception
 
 private const val CHANNEL_NAME = "game_services_firebase_auth"
@@ -220,38 +217,40 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     private class PendingOperation constructor(val method: String, val result: Result)
 
     private fun finishPendingOperationWithSuccess() {
-        Log.i(pendingOperation!!.method, "success")
-        pendingOperation!!.result.success(true)
+        Log.i(pendingOperation?.method, "success")
+        pendingOperation?.result?.success(true)
         pendingOperation = null
     }
 
     private fun finishPendingOperationWithError(exception: Exception) {
-        Log.i(pendingOperation!!.method, "error")
+        Log.i(pendingOperation?.method, "error")
 
         when (exception) {
             is FirebaseAuthException -> {
-                pendingOperation!!.result.error(
+                pendingOperation?.result?.error(
                     exception.errorCode,
                     exception.localizedMessage,
                     null
                 )
             }
             is ApiException -> {
-                pendingOperation!!.result.error(
+                pendingOperation?.result?.error(
                     exception.statusCode.toString(),
                     exception.localizedMessage,
                     null
                 )
             }
             else -> {
-                pendingOperation!!.result.error("error", exception.localizedMessage, null)
-                pendingOperation = null
+                pendingOperation?.result?.error("error", exception.localizedMessage, null)
             }
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == RC_SIGN_IN) {
+            if (data == null) {
+                return false;
+            }
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             val signInAccount = result?.signInAccount
