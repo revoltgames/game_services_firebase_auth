@@ -252,6 +252,9 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == RC_SIGN_IN) {
+            if (data == null) {
+                return false;
+            }
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             val signInAccount = result?.signInAccount
