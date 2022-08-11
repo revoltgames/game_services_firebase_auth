@@ -1,3 +1,7 @@
+## 0.3.0
+* Update Flutter package firebase_core to 1.20.0
+* Update Flutter package firebase_auth to 3.6.2
+
 ## 0.2.0
 * Update Flutter package firebase_core to 1.18.0
 * Update Flutter package firebase_auth to 3.3.20

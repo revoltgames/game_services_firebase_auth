@@ -54,8 +54,8 @@ public class SwiftGameServicesFirebaseAuthPlugin: NSObject, FlutterPlugin {
             
             user.link(with: cred!) { (authResult, error) in
                 
-                if let error = error {
-                    guard let errorCode = AuthErrorCode(rawValue: error._code) else {
+              if let error = error {
+                  guard let errorCode = AuthErrorCode.Code.init(rawValue: error._code) else {
                         print("there was an error logging in but it could not be matched with a firebase code")
                         return
                     }
