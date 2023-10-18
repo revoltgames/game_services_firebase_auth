@@ -1,4 +1,4 @@
-package dev.juliengrandchavin.game_services_firebase_auth
+package io.revoltgames.game_services_firebase_auth
 
 import android.app.Activity
 import android.content.Context

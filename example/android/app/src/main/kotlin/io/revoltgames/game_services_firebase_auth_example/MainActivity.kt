@@ -1,4 +1,4 @@
-package dev.juliengrandchavin.game_services_firebase_auth_example
+package io.revoltgames.game_services_firebase_auth_example
 
 import io.flutter.embedding.android.FlutterActivity
 

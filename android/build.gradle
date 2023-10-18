@@ -1,4 +1,4 @@
-group 'dev.juliengrandchavin.game_services_firebase_auth'
+group 'io.revoltgames.game_services_firebase_auth'
 version '1.0-SNAPSHOT'
 
 buildscript {
