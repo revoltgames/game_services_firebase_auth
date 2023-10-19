@@ -1,4 +1,4 @@
-group 'dev.juliengrandchavin.game_services_firebase_auth'
+group 'io.revoltgames.game_services_firebase_auth'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -25,7 +25,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'

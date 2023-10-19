@@ -1,3 +1,11 @@
+## 1.0.0
+* Update Flutter package firebase_core to 2.5.0
+* Update Flutter package firebase_auth to 4.7.2
+* Update Flutter SDK in pubspec to `">=3.1.0 <4.0.0"`
+* Update the doc
+* Fix example build
+* Transfert the package from jgrandchavin to Revolt Games
+
 ## 0.3.0
 * Update Flutter package firebase_core to 1.20.0
 * Update Flutter package firebase_auth to 3.6.2
