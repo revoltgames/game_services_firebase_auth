@@ -1,4 +1,4 @@
-# game_services_firebase_auth_example
+# game_services_firebase_auth
 
 Demonstrates how to use the game_services_firebase_auth plugin.
 

@@ -26,14 +26,14 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
     defaultConfig {
-        applicationId "io.revoltgames.game_services_firebase_auth_example"
+        applicationId "io.revoltgames.game_services_firebase_auth"
         minSdkVersion 21
         targetSdkVersion 32
         versionCode flutterVersionCode.toInteger()
