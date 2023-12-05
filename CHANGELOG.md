@@ -1,3 +1,7 @@
+## 1.1.0
+* BREAKING: Upgrade to Google Play Game Services v2. If you are using the `games_services` plugin please upgrade to `4.0.0` or higher.
+* BREAKING: Introduce singleton pattern. Replace `GameServicesFirebaseAuth.` with `GameServicesFirebaseAuth.instance.` to migrate.
+
 ## 1.0.0
 * Update Flutter package firebase_core to 2.5.0
 * Update Flutter package firebase_auth to 4.7.2

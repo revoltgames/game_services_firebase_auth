@@ -14,7 +14,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Status
-import com.google.android.gms.games.Games
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.PlayGamesAuthProvider
@@ -101,11 +100,6 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     private fun handleSignInResult() {
         val activity = this.activity!!
-
-        val gamesClient =
-            Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-        gamesClient.setViewForPopups(activity.findViewById(android.R.id.content))
-        gamesClient.setGravityForPopups(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
 
         val account = GoogleSignIn.getLastSignedInAccount(activity)
 
