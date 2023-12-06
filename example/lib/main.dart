@@ -79,7 +79,7 @@ class _MyAppState extends State<MyApp> {
                     TextButton(
                       onPressed: () => GameServicesFirebaseAuth.instance
                           .linkGameServicesCredentialsToCurrentUser(
-                              forceSignInIfCredentialAlreadyUsed: true),
+                              switchFirebaseUsersIfNeeded: true),
                       child: Text(
                           'Link credentials with OS Game service (Forced)'),
                     ),
