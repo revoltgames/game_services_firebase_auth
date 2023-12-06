@@ -238,6 +238,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 pendingOperation?.result?.error("error", exception.localizedMessage, null)
             }
         }
+
+        pendingOperation = null
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
