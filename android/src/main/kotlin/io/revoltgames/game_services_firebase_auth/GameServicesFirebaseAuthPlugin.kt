@@ -211,35 +211,43 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     private class PendingOperation constructor(val method: String, val result: Result)
 
     private fun finishPendingOperationWithSuccess() {
-        Log.i(pendingOperation?.method, "success")
-        pendingOperation?.result?.success(true)
-        pendingOperation = null
+        try {
+            Log.i(pendingOperation?.method, "success")
+            pendingOperation?.result?.success(true)
+        } catch (e: IllegalStateException) {
+            Log.w("finishPendingOperationWithSuccess problem", e)
+        } finally {
+            pendingOperation = null
+        }
     }
 
     private fun finishPendingOperationWithError(exception: Exception) {
-        Log.i(pendingOperation?.method, "error")
-
-        when (exception) {
-            is FirebaseAuthException -> {
-                pendingOperation?.result?.error(
-                    exception.errorCode,
-                    exception.localizedMessage,
-                    null
-                )
+        try {
+            Log.i(pendingOperation?.method, "error")
+            when (exception) {
+                is FirebaseAuthException -> {
+                    pendingOperation?.result?.error(
+                        exception.errorCode,
+                        exception.localizedMessage,
+                        null
+                    )
+                }
+                is ApiException -> {
+                    pendingOperation?.result?.error(
+                        exception.statusCode.toString(),
+                        exception.localizedMessage,
+                        null
+                    )
+                }
+                else -> {
+                    pendingOperation?.result?.error("error", exception.localizedMessage, null)
+                }
             }
-            is ApiException -> {
-                pendingOperation?.result?.error(
-                    exception.statusCode.toString(),
-                    exception.localizedMessage,
-                    null
-                )
-            }
-            else -> {
-                pendingOperation?.result?.error("error", exception.localizedMessage, null)
-            }
+        } catch (e: IllegalStateException) {
+            Log.w("finishPendingOperationWithError problem", e)
+        } finally {
+            pendingOperation = null
         }
-
-        pendingOperation = null
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
