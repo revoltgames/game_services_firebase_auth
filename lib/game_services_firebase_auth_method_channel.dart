@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -19,12 +20,15 @@ class MethodChannelGameServicesFirebaseAuth
   @override
   Future<bool> signInWithGameService({String? androidOAuthClientId}) async {
     try {
-      final dynamic result = await methodChannel.invokeMethod(
-          'sign_in_with_game_service', {'client_id': androidOAuthClientId});
+      final dynamic result = await _withPopupNotShownTimeout(methodChannel
+          .invokeMethod('sign_in_with_game_service',
+              {'client_id': androidOAuthClientId}));
       if (result is bool) {
         return result;
       }
       return false;
+    } on GameServiceFirebaseAuthException catch (error) {
+      throw error;
     } on PlatformException catch (error) {
       throw GameServiceFirebaseAuthException(
           code: error.toAuthError(),
@@ -67,6 +71,8 @@ class MethodChannelGameServicesFirebaseAuth
         return result;
       }
       return false;
+    } on GameServiceFirebaseAuthException catch (error) {
+      throw error;
     } on PlatformException catch (error) {
       throw GameServiceFirebaseAuthException(
           code: error.toAuthError(),
@@ -76,6 +82,34 @@ class MethodChannelGameServicesFirebaseAuth
     } catch (error) {
       throw GameServiceFirebaseAuthException(message: error.toString());
     }
+  }
+
+  /// A helper method that times out the given future if no pop-up (view
+  /// controller) is shown within the given timeframe.
+  Future<dynamic> _withPopupNotShownTimeout(Future<dynamic> invocation,
+      {Duration timeLimit = const Duration(seconds: 2)}) {
+    final Completer<bool> popUpShownCompleter = Completer();
+    AppLifecycleListener appLifecycleListener =
+        AppLifecycleListener(onInactive: () {
+      if (!popUpShownCompleter.isCompleted) popUpShownCompleter.complete(true);
+    });
+    Future.delayed(timeLimit).then((_) {
+      if (!popUpShownCompleter.isCompleted) popUpShownCompleter.complete(false);
+    });
+    Future<void> timeout = popUpShownCompleter.future.then((popUpShown) {
+      appLifecycleListener.dispose();
+      if (!popUpShown)
+        throw GameServiceFirebaseAuthException(
+            code: GameServiceFirebaseAuthError
+                .device_not_signed_into_game_service,
+            message: 'User has disabled Game Services.',
+            details:
+                'Platform has failed to display a login popup within the allotted timeframe. '
+                'This check is to prevent a bug with Game Center where the iOS SDK starts '
+                'silently ignoring login calls if the user cancels the popup 3+ times. '
+                'See https://stackoverflow.com/questions/18927723.');
+    });
+    return Future.any([invocation, timeout]);
   }
 }
 

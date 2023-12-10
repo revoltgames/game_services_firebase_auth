@@ -4,6 +4,7 @@
 * BREAKING: Introduce singleton pattern. Replace `GameServicesFirebaseAuth.` with `GameServicesFirebaseAuth.instance.` to migrate.
 * BREAKING: `linkGameServicesCredentialsToCurrentUser()` param `forceSignInIfCredentialAlreadyUsed` renamed as `switchFirebaseUsersIfNeeded`.
 * All methods upon error throw `GameServiceFirebaseAuthException` which has comes with a discrete ENUM error code.
+* Adds timeout to platform calls as a counter measure against iOS hangs (e.g. https://stackoverflow.com/questions/18927723).
 
 ## 1.0.0
 * Update Flutter package firebase_core to 2.5.0
