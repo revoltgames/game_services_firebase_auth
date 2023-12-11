@@ -87,7 +87,7 @@ class MethodChannelGameServicesFirebaseAuth
   /// A helper method that times out the given future if no pop-up (view
   /// controller) is shown within the given timeframe.
   Future<dynamic> _withPopupNotShownTimeout(Future<dynamic> invocation,
-      {Duration timeLimit = const Duration(seconds: 5)}) {
+      {Duration timeLimit = const Duration(seconds: 8)}) {
     final Completer<bool> popUpShownCompleter = Completer();
     AppLifecycleListener appLifecycleListener =
         AppLifecycleListener(onInactive: () {
