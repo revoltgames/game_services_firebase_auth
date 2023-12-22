@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 
 import android.util.Log
-import android.view.Gravity
-import androidx.annotation.NonNull
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -26,6 +24,8 @@ import java.lang.Exception
 
 private const val CHANNEL_NAME = "game_services_firebase_auth"
 private const val RC_SIGN_IN = 9000
+
+private const val LOG_PREFIX = "game_services_firebase"
 
 object Methods {
     const val signInWithGameService = "sign_in_with_game_service"
@@ -49,7 +49,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     companion object {
         @JvmStatic
-        fun getResourceFromContext(@NonNull context: Context, resName: String): String {
+        fun getResourceFromContext(context: Context, resName: String): String {
             val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
             if (stringRes == 0) {
                 throw IllegalArgumentException(
@@ -79,8 +79,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             if (task.isSuccessful) {
                 handleSignInResult()
             } else {
-                Log.e("Error", "signInError", task.exception)
-                Log.i("ExplicitSignIn", "Trying explicit sign in")
+                Log.e(LOG_PREFIX, "signInError", task.exception)
+                Log.i(LOG_PREFIX, "Trying explicit sign in")
                 explicitSignIn(clientId)
             }
         }
@@ -91,11 +91,15 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
+        Log.i(LOG_PREFIX, "explicitSignIn: authCode: $authCode")
+
         val builder = GoogleSignInOptions.Builder(
             GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
+
+        Log.i(LOG_PREFIX, "explicitSignIn: started sign in flow")
     }
 
     private fun handleSignInResult() {
@@ -109,6 +113,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             } else if (method == Methods.linkGameServicesCredentialsToCurrentUser) {
                 linkCredentialsFirebaseWithPlayGames(account)
             }
+        } else {
+            Log.w(LOG_PREFIX, "last signed in account is null")
         }
     }
 
@@ -212,10 +218,10 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     private fun finishPendingOperationWithSuccess() {
         try {
-            Log.i(pendingOperation?.method, "success")
+            Log.i(LOG_PREFIX, pendingOperation?.method + ": success")
             pendingOperation?.result?.success(true)
         } catch (e: IllegalStateException) {
-            Log.w("finishPendingOperationWithSuccess problem", e)
+            Log.w(LOG_PREFIX, "finishPendingOperationWithSuccess: problem", e)
         } finally {
             pendingOperation = null
         }
@@ -223,7 +229,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     private fun finishPendingOperationWithError(exception: Exception) {
         try {
-            Log.i(pendingOperation?.method, "error")
+            Log.i(LOG_PREFIX, pendingOperation?.method+ ": error", exception)
             when (exception) {
                 is FirebaseAuthException -> {
                     pendingOperation?.result?.error(
@@ -244,7 +250,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 }
             }
         } catch (e: IllegalStateException) {
-            Log.w("finishPendingOperationWithError problem", e)
+            Log.w(LOG_PREFIX, "finishPendingOperationWithError: problem", e)
         } finally {
             pendingOperation = null
         }
@@ -253,19 +259,23 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == RC_SIGN_IN) {
             if (data == null) {
-                return false;
+                Log.w(LOG_PREFIX, "activity finished with null data")
+                return false
             }
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             val signInAccount = result?.signInAccount
 
             if (result?.isSuccess == true && signInAccount != null) {
+                Log.i(LOG_PREFIX, "sign in activity success")
                 handleSignInResult()
             } else {
+                Log.w(LOG_PREFIX, "sign in activity failed: " + result.toString())
                 finishPendingOperationWithError(ApiException(result?.status ?: Status(0)))
             }
             return true
         }
+        Log.w(LOG_PREFIX, "unknown activity requestCode: $requestCode")
         return false
     }
 
