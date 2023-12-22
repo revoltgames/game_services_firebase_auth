@@ -271,6 +271,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 handleSignInResult()
             } else {
                 Log.w(LOG_PREFIX, "sign in activity failed: " + result.toString())
+                Log.i(LOG_PREFIX, "sign in result resolution: " + result?.status?.resolution?.toString())
                 finishPendingOperationWithError(ApiException(result?.status ?: Status(0)))
             }
             return true
