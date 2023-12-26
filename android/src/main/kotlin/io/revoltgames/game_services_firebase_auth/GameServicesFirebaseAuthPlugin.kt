@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 
 import android.util.Log
-import android.view.Gravity
-import androidx.annotation.NonNull
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -14,7 +12,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Status
-import com.google.android.gms.games.Games
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.PlayGamesAuthProvider
@@ -27,6 +24,8 @@ import java.lang.Exception
 
 private const val CHANNEL_NAME = "game_services_firebase_auth"
 private const val RC_SIGN_IN = 9000
+
+private const val LOG_PREFIX = "game_services_firebase"
 
 object Methods {
     const val signInWithGameService = "sign_in_with_game_service"
@@ -50,7 +49,7 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
     companion object {
         @JvmStatic
-        fun getResourceFromContext(@NonNull context: Context, resName: String): String {
+        fun getResourceFromContext(context: Context, resName: String): String {
             val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
             if (stringRes == 0) {
                 throw IllegalArgumentException(
@@ -80,8 +79,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             if (task.isSuccessful) {
                 handleSignInResult()
             } else {
-                Log.e("Error", "signInError", task.exception)
-                Log.i("ExplicitSignIn", "Trying explicit sign in")
+                Log.e(LOG_PREFIX, "signInError", task.exception)
+                Log.i(LOG_PREFIX, "Trying explicit sign in")
                 explicitSignIn(clientId)
             }
         }
@@ -92,20 +91,19 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
 
         val authCode = clientId ?: getResourceFromContext(context, "default_web_client_id")
 
+        Log.i(LOG_PREFIX, "explicitSignIn: authCode: $authCode")
+
         val builder = GoogleSignInOptions.Builder(
             GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
         activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
+
+        Log.i(LOG_PREFIX, "explicitSignIn: started sign in flow")
     }
 
     private fun handleSignInResult() {
         val activity = this.activity!!
-
-        val gamesClient =
-            Games.getGamesClient(activity, GoogleSignIn.getLastSignedInAccount(activity)!!)
-        gamesClient.setViewForPopups(activity.findViewById(android.R.id.content))
-        gamesClient.setGravityForPopups(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
 
         val account = GoogleSignIn.getLastSignedInAccount(activity)
 
@@ -115,6 +113,8 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             } else if (method == Methods.linkGameServicesCredentialsToCurrentUser) {
                 linkCredentialsFirebaseWithPlayGames(account)
             }
+        } else {
+            Log.w(LOG_PREFIX, "last signed in account is null")
         }
     }
 
@@ -217,51 +217,73 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
     private class PendingOperation constructor(val method: String, val result: Result)
 
     private fun finishPendingOperationWithSuccess() {
-        Log.i(pendingOperation?.method, "success")
-        pendingOperation?.result?.success(true)
-        pendingOperation = null
+        try {
+            Log.i(LOG_PREFIX, pendingOperation?.method + ": success")
+            pendingOperation?.result?.success(true)
+        } catch (e: IllegalStateException) {
+            Log.w(LOG_PREFIX, "finishPendingOperationWithSuccess: problem", e)
+        } finally {
+            pendingOperation = null
+        }
     }
 
     private fun finishPendingOperationWithError(exception: Exception) {
-        Log.i(pendingOperation?.method, "error")
-
-        when (exception) {
-            is FirebaseAuthException -> {
-                pendingOperation?.result?.error(
-                    exception.errorCode,
-                    exception.localizedMessage,
-                    null
-                )
+        try {
+            Log.i(LOG_PREFIX, pendingOperation?.method+ ": error", exception)
+            when (exception) {
+                is FirebaseAuthException -> {
+                    pendingOperation?.result?.error(
+                        exception.errorCode,
+                        exception.localizedMessage,
+                        null
+                    )
+                }
+                is ApiException -> {
+                    pendingOperation?.result?.error(
+                        exception.statusCode.toString(),
+                        exception.localizedMessage,
+                        null
+                    )
+                }
+                else -> {
+                    pendingOperation?.result?.error("error", exception.localizedMessage, null)
+                }
             }
-            is ApiException -> {
-                pendingOperation?.result?.error(
-                    exception.statusCode.toString(),
-                    exception.localizedMessage,
-                    null
-                )
-            }
-            else -> {
-                pendingOperation?.result?.error("error", exception.localizedMessage, null)
-            }
+        } catch (e: IllegalStateException) {
+            Log.w(LOG_PREFIX, "finishPendingOperationWithError: problem", e)
+        } finally {
+            pendingOperation = null
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == RC_SIGN_IN) {
             if (data == null) {
-                return false;
+                Log.w(LOG_PREFIX, "activity finished with null data")
+                return false
             }
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             val signInAccount = result?.signInAccount
 
             if (result?.isSuccess == true && signInAccount != null) {
+                Log.i(LOG_PREFIX, "sign in activity success")
                 handleSignInResult()
             } else {
+                Log.w(LOG_PREFIX, "sign in activity failed: " + result.toString())
+                Log.i(LOG_PREFIX, "sign in result connection result: " + result?.status?.connectionResult.toString())
+                Log.i(LOG_PREFIX, "sign in result resolution: " + result?.status?.resolution?.toString())
+                Log.i(LOG_PREFIX, "sign in result status: " + result?.status?.status?.toString())
+                Log.i(LOG_PREFIX, "sign in result status code: " + result?.status?.statusCode?.toString())
+                Log.i(LOG_PREFIX, "sign in result status message: " + result?.status?.statusMessage)
+                Log.i(LOG_PREFIX, "sign in result is canceled: " + result?.status?.isCanceled)
+                Log.i(LOG_PREFIX, "sign in result is interrupted: " + result?.status?.isInterrupted)
+                Log.i(LOG_PREFIX, "sign in result is success: " + result?.status?.isSuccess)
                 finishPendingOperationWithError(ApiException(result?.status ?: Status(0)))
             }
             return true
         }
+        Log.w(LOG_PREFIX, "unknown activity requestCode: $requestCode")
         return false
     }
 
