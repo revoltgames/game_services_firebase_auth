@@ -271,7 +271,14 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
                 handleSignInResult()
             } else {
                 Log.w(LOG_PREFIX, "sign in activity failed: " + result.toString())
+                Log.i(LOG_PREFIX, "sign in result connection result: " + result?.status?.connectionResult.toString())
                 Log.i(LOG_PREFIX, "sign in result resolution: " + result?.status?.resolution?.toString())
+                Log.i(LOG_PREFIX, "sign in result status: " + result?.status?.status?.toString())
+                Log.i(LOG_PREFIX, "sign in result status code: " + result?.status?.statusCode?.toString())
+                Log.i(LOG_PREFIX, "sign in result status message: " + result?.status?.statusMessage)
+                Log.i(LOG_PREFIX, "sign in result is canceled: " + result?.status?.isCanceled)
+                Log.i(LOG_PREFIX, "sign in result is interrupted: " + result?.status?.isInterrupted)
+                Log.i(LOG_PREFIX, "sign in result is success: " + result?.status?.isSuccess)
                 finishPendingOperationWithError(ApiException(result?.status ?: Status(0)))
             }
             return true
