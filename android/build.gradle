@@ -2,14 +2,14 @@ group 'io.revoltgames.game_services_firebase_auth'
 version '2.0.0'
 
 buildscript {
-    ext.kotlin_version = '1.9.21'
+    ext.kotlin_version = '1.9.23'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.3.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -32,12 +32,12 @@ android {
     compileSdkVersion 33
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
@@ -51,7 +51,7 @@ android {
 
     dependencies {
         testImplementation 'org.jetbrains.kotlin:kotlin-test'
-        testImplementation 'org.mockito:mockito-core:5.0.0'
+        testImplementation 'org.mockito:mockito-core:5.11.0'
     }
 
     testOptions {
@@ -68,7 +68,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
-    implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
     implementation("com.google.firebase:firebase-auth")
 }
