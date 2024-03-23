@@ -1,6 +1,6 @@
 name: game_services_firebase_auth
 description: This plugin make some FirebaseAuth features available with GameCenter on iOS and PlayGames on Android
-version: 2.0.0
+version: 2.1.0
 homepage: https://github.com/revoltgames/game_services_firebase_auth.git
 repository: https://github.com/revoltgames/game_services_firebase_auth.git
 

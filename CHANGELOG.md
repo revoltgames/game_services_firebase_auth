@@ -1,3 +1,7 @@
+## 2.1.0
+* Update to Java 17
+* Upgrade to Android Gradle 8.3
+
 ## 2.0.0
 * Overall cleanup of the plugin by @orkun1675
 * BREAKING: Upgrade to Google Play Game Services v2. If you are using the `games_services` plugin please upgrade to `4.0.0` or higher.
