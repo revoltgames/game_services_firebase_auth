@@ -97,14 +97,9 @@ class GameServicesFirebaseAuthPlugin(private var activity: Activity? = null) : F
             GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
         ).requestServerAuthCode(authCode)
         googleSignInClient = GoogleSignIn.getClient(activity, builder.build())
+        activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
 
-        Log.i(LOG_PREFIX, "explicitSignIn: signOut start")
-        googleSignInClient?.signOut()?.addOnCompleteListener { task ->
-            Log.i(LOG_PREFIX, "explicitSignIn: signOut result:" + task.isSuccessful)
-    
-            activity.startActivityForResult(googleSignInClient?.signInIntent, RC_SIGN_IN)
-            Log.i(LOG_PREFIX, "explicitSignIn: started sign in flow")
-        }
+        Log.i(LOG_PREFIX, "explicitSignIn: started sign in flow")
     }
 
     private fun handleSignInResult() {
