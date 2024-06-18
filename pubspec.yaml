@@ -13,8 +13,8 @@ dependencies:
     sdk: flutter
 
   plugin_platform_interface: ^2.1.8
-  firebase_core: ^2.27.1
-  firebase_auth: ^4.17.9
+  firebase_core: ^3.1.0
+  firebase_auth: ^5.1.0
 
 dev_dependencies:
   flutter_test:
