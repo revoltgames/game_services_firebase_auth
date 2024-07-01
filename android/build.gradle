@@ -1,20 +1,20 @@
 group 'io.revoltgames.game_services_firebase_auth'
-version '1.0-SNAPSHOT'
+version '2.0.0'
 
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = '1.9.23'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.4'
+        classpath 'com.android.tools.build:gradle:8.3.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
-rootProject.allprojects {
+allprojects {
     repositories {
         google()
         mavenCentral()
@@ -25,19 +25,50 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
+    if (project.android.hasProperty("namespace")) {
+        namespace 'io.revoltgames.game_services_firebase_auth'
+    }
+
     compileSdkVersion 33
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
+
     defaultConfig {
         minSdkVersion 21
+    }
+
+    dependencies {
+        testImplementation 'org.jetbrains.kotlin:kotlin-test'
+        testImplementation 'org.mockito:mockito-core:5.11.0'
+    }
+
+    testOptions {
+        unitTests.all {
+            useJUnitPlatform()
+
+            testLogging {
+               events "passed", "skipped", "failed", "standardOut", "standardError"
+               outputs.upToDateWhen {false}
+               showStandardStreams = true
+            }
+        }
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.android.gms:play-services-auth:20.2.0'
-    implementation 'com.google.android.gms:play-services-games:22.0.1'
-    implementation 'com.google.firebase:firebase-auth:21.0.6'
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+    implementation("com.google.firebase:firebase-auth")
 }

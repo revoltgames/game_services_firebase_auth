@@ -1,3 +1,15 @@
+## 2.1.0
+* Update to Java 17
+* Upgrade to Android Gradle 8.3
+
+## 2.0.0
+* Overall cleanup of the plugin by @orkun1675
+* BREAKING: Upgrade to Google Play Game Services v2. If you are using the `games_services` plugin please upgrade to `4.0.0` or higher.
+* BREAKING: Introduce singleton pattern. Replace `GameServicesFirebaseAuth.` with `GameServicesFirebaseAuth.instance.` to migrate.
+* BREAKING: `linkGameServicesCredentialsToCurrentUser()` param `forceSignInIfCredentialAlreadyUsed` renamed as `switchFirebaseUsersIfNeeded`.
+* All methods upon error throw `GameServiceFirebaseAuthException` which has comes with a discrete ENUM error code.
+* Adds timeout to platform calls as a counter measure against iOS hangs (e.g. https://stackoverflow.com/questions/18927723).
+
 ## 1.0.0
 * Update Flutter package firebase_core to 2.5.0
 * Update Flutter package firebase_auth to 4.7.2
