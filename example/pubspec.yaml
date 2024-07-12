@@ -8,8 +8,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^2.4.1
-  firebase_auth: ^4.2.5
   game_services_firebase_auth:
     path: ../
 
